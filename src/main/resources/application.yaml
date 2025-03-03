@@ -33,5 +33,5 @@ minio:
     secretKey: ${MINIO_SECRET_KEY}
 
 redis:
-  host: redis-sessions
+  host: localhost
   port: 6379
