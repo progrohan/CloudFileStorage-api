@@ -4,6 +4,7 @@ import com.progrohan.cloud_file_storage.dto.UserRequestDTO;
 import com.progrohan.cloud_file_storage.dto.UserResponseDTO;
 import com.progrohan.cloud_file_storage.entity.UserEntity;
 import com.progrohan.cloud_file_storage.exception.AuthException;
+import com.progrohan.cloud_file_storage.exception.StorageException;
 import com.progrohan.cloud_file_storage.exception.UserExistException;
 import com.progrohan.cloud_file_storage.mapper.UserMapper;
 import com.progrohan.cloud_file_storage.repository.UserRepository;
@@ -24,12 +25,13 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
+    private final StorageService storageService;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public UserResponseDTO createUser(UserRequestDTO userRequestDTO){
+    public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
 
-        if(userRepository.findByUsername(userRequestDTO.getUsername()).isPresent())
+        if (userRepository.findByUsername(userRequestDTO.getUsername()).isPresent())
             throw new UserExistException("User with username " + userRequestDTO.getUsername() + " already exists!");
 
         userRequestDTO.setPassword(passwordEncoder
@@ -37,12 +39,19 @@ public class AuthService {
 
         UserEntity userEntity = userRepository.saveAndFlush(userMapper.toEntity(userRequestDTO));
 
+        try {
+            storageService.createUsersRootFolder(userEntity.getId());
+        } catch (StorageException e) {
+            userRepository.delete(userEntity);
+            throw e;
+        }
+
         return userMapper.toDto(userEntity);
 
     }
 
-    public UserResponseDTO loginUser(UserRequestDTO user, HttpSession session){
-        try{
+    public UserResponseDTO loginUser(UserRequestDTO user, HttpSession session) {
+        try {
             Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
             SecurityContext context = SecurityContextHolder.getContext();
@@ -50,8 +59,8 @@ public class AuthService {
 
             session.setAttribute("SPRING_SECURITY_CONTEXT", context);
 
-            return  userMapper.toResponseDto(user);
-        }catch (AuthenticationException e){
+            return userMapper.toResponseDto(user);
+        } catch (AuthenticationException e) {
             throw new AuthException("Credentials incorrect!");
         }
     }
