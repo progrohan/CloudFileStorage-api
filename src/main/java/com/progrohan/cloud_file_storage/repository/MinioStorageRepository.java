@@ -1,11 +1,13 @@
-package com.progrohan.cloud_file_storage.service;
+package com.progrohan.cloud_file_storage.repository;
 
 
 import com.progrohan.cloud_file_storage.exception.StorageException;
+import com.progrohan.cloud_file_storage.service.UserService;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.StatObjectArgs;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,9 +17,10 @@ import java.io.ByteArrayInputStream;
 
 @Service
 @RequiredArgsConstructor
-public class StorageService {
+public class MinioStorageRepository {
 
     private final MinioClient minioClient;
+    private final UserService userService;
 
     @Value("${minio.rootBucket}")
     private String rootBucket;
@@ -35,9 +38,9 @@ public class StorageService {
         }
     }
 
-    public void createUsersRootFolder(Long  userId){
+    public void createUsersRootFolder(String name){
         try{
-            String folderName = String.format("user-%d-files/", userId);
+            String folderName = getUserRootFolderByName(name);
 
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -52,8 +55,43 @@ public class StorageService {
         }
     }
 
+    public void createEmptyDirectory(String name, String path){
+        try{
+            String finalPath = getUserRootFolderByName(name) + path + "/";
+
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(rootBucket)
+                            .object(finalPath)
+                            .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
+                            .contentType("application/x-directory")
+                            .build()
+            );
+        }catch (Exception e){
+            throw new StorageException("Problem with creating folder!");
+        }
 
 
+
+    }
+
+
+    public String getUserRootFolderByName(String name){
+        return String.format("user-%d-files/", userService.getUserId(name));
+    }
+
+    public long getResourcesSize(String path){
+        try{
+            return minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(rootBucket)
+                    .object(path)
+                    .build()).size();
+        }catch (Exception e){
+            throw new StorageException("Problem with getting resources size!");
+        }
+
+
+    }
 
 
 }
