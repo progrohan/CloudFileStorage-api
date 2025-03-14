@@ -1,6 +1,8 @@
 package com.progrohan.cloud_file_storage.service;
 
 
+import com.progrohan.cloud_file_storage.entity.UserEntity;
+import com.progrohan.cloud_file_storage.exception.UserExistException;
 import com.progrohan.cloud_file_storage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
@@ -26,5 +28,11 @@ public class UserService implements UserDetailsService {
                         user.getPassword(),
                         Collections.emptyList()
                 )).orElseThrow(() -> new UsernameNotFoundException("User with username" + username + "does not exist!"));
+    }
+
+    public Long getUserId(String name){
+        UserEntity user = userRepository.findByUsername(name).orElseThrow(() -> new UsernameNotFoundException("User with username" + name + "does not exist!"));
+
+        return user.getId();
     }
 }
