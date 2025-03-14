@@ -7,6 +7,7 @@ import com.progrohan.cloud_file_storage.exception.AuthException;
 import com.progrohan.cloud_file_storage.exception.StorageException;
 import com.progrohan.cloud_file_storage.exception.UserExistException;
 import com.progrohan.cloud_file_storage.mapper.UserMapper;
+import com.progrohan.cloud_file_storage.repository.MinioStorageRepository;
 import com.progrohan.cloud_file_storage.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
-    private final StorageService storageService;
+    private final MinioStorageRepository storageService;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
@@ -40,7 +41,7 @@ public class AuthService {
         UserEntity userEntity = userRepository.saveAndFlush(userMapper.toEntity(userRequestDTO));
 
         try {
-            storageService.createUsersRootFolder(userEntity.getId());
+            storageService.createUsersRootFolder(userEntity.getUsername());
         } catch (StorageException e) {
             userRepository.delete(userEntity);
             throw e;
