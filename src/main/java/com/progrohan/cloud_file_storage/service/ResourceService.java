@@ -11,7 +11,9 @@ public class ResourceService {
 
     private final MinioStorageRepository storageRepository;
 
-    public ResourceResponseDTO getResource(String path){
+    public ResourceResponseDTO getResource(String userName,String reqPath){
+
+        String path = storageRepository.getUserRootFolderByName(userName) + reqPath + "/";
 
         ResourceResponseDTO resource = new ResourceResponseDTO();
 
@@ -24,7 +26,8 @@ public class ResourceService {
         }
 
         int lastSlashIndex = path.lastIndexOf('/');
-        String resourcePath = path.substring(0, lastSlashIndex + 1);
+        int firstSlashIndex = path.indexOf('/');
+        String resourcePath = path.substring(firstSlashIndex + 1, lastSlashIndex + 1);
         String name = path.substring(lastSlashIndex + 1);
 
         resource.setPath(resourcePath);
