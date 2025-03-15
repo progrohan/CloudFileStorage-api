@@ -4,10 +4,13 @@ package com.progrohan.cloud_file_storage.repository;
 import com.progrohan.cloud_file_storage.exception.StorageException;
 import com.progrohan.cloud_file_storage.service.UserService;
 import io.minio.BucketExistsArgs;
+import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.Result;
 import io.minio.StatObjectArgs;
+import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,14 +58,13 @@ public class MinioStorageRepository {
         }
     }
 
-    public void createEmptyDirectory(String name, String path){
+    public void createEmptyDirectory(String path){
         try{
-            String finalPath = getUserRootFolderByName(name) + path + "/";
 
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(rootBucket)
-                            .object(finalPath)
+                            .object(path)
                             .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
                             .contentType("application/x-directory")
                             .build()
@@ -71,10 +73,17 @@ public class MinioStorageRepository {
             throw new StorageException("Problem with creating folder!");
         }
 
-
-
     }
 
+    public Iterable<Result<Item>> getDirectoriesResources(String path){
+
+        return minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket(rootBucket)
+                .prefix(path)
+                .recursive(false)
+                .build());
+
+    }
 
     public String getUserRootFolderByName(String name){
         return String.format("user-%d-files/", userService.getUserId(name));
@@ -90,8 +99,8 @@ public class MinioStorageRepository {
             throw new StorageException("Problem with getting resources size!");
         }
 
-
     }
+
 
 
 }
