@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.List;
 
 
 @RestController
@@ -29,6 +30,14 @@ public class DirectoryController {
 
 
         return ResponseEntity.created(URI.create("/api/directory")).body(resource);
+    }
+
+    @GetMapping()
+    public ResponseEntity<List<ResourceResponseDTO>> getDirectoriesResources(@RequestParam String path, @AuthenticationPrincipal UserDetails userDetails){
+
+        List<ResourceResponseDTO> directoriesResources = directoryService.getDirectoriesResources(userDetails.getUsername(), path);
+
+        return ResponseEntity.ok(directoriesResources);
     }
 
 
