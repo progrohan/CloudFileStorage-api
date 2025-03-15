@@ -2,7 +2,6 @@ package com.progrohan.cloud_file_storage.service;
 
 
 import com.progrohan.cloud_file_storage.entity.UserEntity;
-import com.progrohan.cloud_file_storage.exception.UserExistException;
 import com.progrohan.cloud_file_storage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
