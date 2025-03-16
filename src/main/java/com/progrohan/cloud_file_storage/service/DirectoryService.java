@@ -1,6 +1,6 @@
 package com.progrohan.cloud_file_storage.service;
 
-
+import java.nio.file.Paths;
 import com.progrohan.cloud_file_storage.dto.ResourceResponseDTO;
 import com.progrohan.cloud_file_storage.exception.StorageException;
 import com.progrohan.cloud_file_storage.repository.MinioStorageRepository;
@@ -22,7 +22,7 @@ public class DirectoryService {
 
     public ResourceResponseDTO createEmptyDirectory(String userName, String path){
 
-        String finalPath = storageRepository.getUserRootFolderByName(userName) + path + "/";
+        String finalPath = storageRepository.getUserRootFolderByName(userName) + path;
 
         storageRepository.createEmptyDirectory(finalPath);
 
@@ -34,7 +34,9 @@ public class DirectoryService {
 
         List<ResourceResponseDTO> resources = new ArrayList<>();
 
-        String finalPath = storageRepository.getUserRootFolderByName(userName) + path + "/";
+        String finalPath = storageRepository.getUserRootFolderByName(userName) + path;
+
+        storageRepository.checkIfResourceExists(finalPath);
 
         try {
             Iterable<Result<Item>> results = storageRepository.getDirectoriesResources(finalPath);
@@ -46,9 +48,9 @@ public class DirectoryService {
                 if (Objects.equals(resourcePath, finalPath )) continue;
 
                 int firstSlashIndex = resourcePath.indexOf('/');
-                int lastSlashIndex = resourcePath.lastIndexOf('/');
 
-                resources.add(resourceService.getResource(userName, resourcePath.substring(firstSlashIndex + 1, lastSlashIndex)));
+
+                resources.add(resourceService.getResource(userName, resourcePath.substring(firstSlashIndex + 1)));
             }
 
             return resources;
