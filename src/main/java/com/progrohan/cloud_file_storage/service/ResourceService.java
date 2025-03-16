@@ -13,7 +13,9 @@ public class ResourceService {
 
     public ResourceResponseDTO getResource(String userName,String reqPath){
 
-        String path = storageRepository.getUserRootFolderByName(userName) + reqPath + "/";
+        String path = storageRepository.getUserRootFolderByName(userName) + reqPath;
+
+        storageRepository.checkIfResourceExists(path);
 
         ResourceResponseDTO resource = new ResourceResponseDTO();
 
@@ -34,6 +36,33 @@ public class ResourceService {
         resource.setName(name);
 
         return resource;
+    }
+
+    public void deleteResource(String userName, String reqPath){
+
+        String path = storageRepository.getUserRootFolderByName(userName) + reqPath;
+
+        storageRepository.checkIfResourceExists(path);
+
+        storageRepository.deleteResource(path);
+
+    }
+
+    public ResourceResponseDTO renameResource(String userName, String reqPath, String newPath){
+
+        String oldPath = storageRepository.getUserRootFolderByName(userName) + reqPath;
+        String path = storageRepository.getUserRootFolderByName(userName) + newPath;
+
+        storageRepository.checkIfResourceExists(reqPath);
+
+        if (path.endsWith("/")) {
+            storageRepository.renameFolder(oldPath, path);
+        }else{
+            storageRepository.renameFile(oldPath, path);
+        }
+
+        return getResource(userName, newPath);
+
     }
 
 }
