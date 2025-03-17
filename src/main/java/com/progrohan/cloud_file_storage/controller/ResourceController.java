@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/resource")
 @RequiredArgsConstructor
@@ -36,6 +38,14 @@ public class ResourceController {
         ResourceResponseDTO resource = resourceService.renameResource(userDetails.getUsername(), from, to);
 
         return ResponseEntity.ok(resource);
+
+    }
+    @GetMapping("/search")
+    public ResponseEntity<List<ResourceResponseDTO>> search(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String query){
+
+        List<ResourceResponseDTO> resources = resourceService.findResources(userDetails.getUsername(), query);
+
+        return ResponseEntity.ok(resources);
 
     }
 
