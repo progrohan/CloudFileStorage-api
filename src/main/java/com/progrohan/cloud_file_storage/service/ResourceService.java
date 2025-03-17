@@ -1,9 +1,16 @@
 package com.progrohan.cloud_file_storage.service;
 
 import com.progrohan.cloud_file_storage.dto.ResourceResponseDTO;
+import com.progrohan.cloud_file_storage.exception.StorageException;
 import com.progrohan.cloud_file_storage.repository.MinioStorageRepository;
+import io.minio.Result;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +43,30 @@ public class ResourceService {
         resource.setName(name);
 
         return resource;
+    }
+
+
+    public List<ResourceResponseDTO> findResources(String userName, String query){
+
+        List<ResourceResponseDTO> resources = new ArrayList<>();
+
+
+        try {
+            Iterable<Result<Item>> results = storageRepository.findResources(query);
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                String resourcePath = item.objectName();
+
+                int firstSlashIndex = resourcePath.indexOf('/');
+
+                resources.add(getResource(userName, resourcePath.substring(firstSlashIndex + 1)));
+            }
+            return resources;
+        }catch (Exception e){
+            throw new StorageException("Problem with finding resources!");
+        }
+
     }
 
     public void deleteResource(String userName, String reqPath){
