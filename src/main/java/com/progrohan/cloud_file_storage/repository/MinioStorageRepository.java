@@ -91,6 +91,16 @@ public class MinioStorageRepository {
 
     }
 
+    public Iterable<Result<Item>> findResources(String query){
+
+        return minioClient.listObjects(ListObjectsArgs.builder()
+                        .bucket(rootBucket)
+                        .prefix(query)
+                        .recursive(true)
+                .build());
+
+    }
+
     public String getUserRootFolderByName(String name){
         return String.format("user-%d-files/", userService.getUserId(name));
     }
