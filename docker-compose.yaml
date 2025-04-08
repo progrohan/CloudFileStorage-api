@@ -1,4 +1,22 @@
 services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring-app
+    restart: always
+    ports:
+      - "8080:8080"
+    env_file:
+      .env
+    depends_on:
+      - db
+      - redis
+      - minio
+    networks:
+      - app-network
+
   db:
     image: postgres:latest
     container_name: postgres-file-storage
@@ -38,6 +56,7 @@ services:
 
 networks:
   app-network:
+    name: app-network
     driver: bridge
 
 
