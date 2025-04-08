@@ -9,10 +9,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class ResourceNotFoundExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Void> handleResourceNotFoundException(ResourceNotFoundException e){
-
+    public ResponseEntity<Void> handleResourceNotFoundException(){
         return ResponseEntity.notFound().build();
-
     }
 
 }

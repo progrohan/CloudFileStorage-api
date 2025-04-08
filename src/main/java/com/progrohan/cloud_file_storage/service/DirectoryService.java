@@ -1,6 +1,5 @@
 package com.progrohan.cloud_file_storage.service;
 
-import java.nio.file.Paths;
 import com.progrohan.cloud_file_storage.dto.ResourceResponseDTO;
 import com.progrohan.cloud_file_storage.exception.StorageException;
 import com.progrohan.cloud_file_storage.repository.MinioStorageRepository;
@@ -52,7 +51,6 @@ public class DirectoryService {
 
                 resources.add(resourceService.getResource(userName, resourcePath.substring(firstSlashIndex + 1)));
             }
-
             return resources;
         }catch (Exception e){
             throw new StorageException("Problem with getting directories resources!");

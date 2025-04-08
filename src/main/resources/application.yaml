@@ -8,7 +8,6 @@ spring:
     name: file-storage-api
 
   session:
-    store-type: redis
     timeout: 30m
 
   liquibase:

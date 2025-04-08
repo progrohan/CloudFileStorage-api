@@ -7,6 +7,7 @@ import com.progrohan.cloud_file_storage.service.UserService;
 import io.minio.BucketExistsArgs;
 import io.minio.CopyObjectArgs;
 import io.minio.CopySource;
+import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -19,10 +20,15 @@ import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
-import java.util.Iterator;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -91,11 +97,11 @@ public class MinioStorageRepository {
 
     }
 
-    public Iterable<Result<Item>> findResources(String query){
+    public Iterable<Result<Item>> findResources(String prefix){
 
         return minioClient.listObjects(ListObjectsArgs.builder()
                         .bucket(rootBucket)
-                        .prefix(query)
+                        .prefix(prefix)
                         .recursive(true)
                 .build());
 
@@ -181,4 +187,78 @@ public class MinioStorageRepository {
 
     }
 
+    public void uploadFile(String path, MultipartFile file){
+        try (var inputStream = file.getInputStream()) {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(rootBucket)
+                            .object(path)
+                            .stream(inputStream, file.getSize(), -1)
+                            .contentType(file.getContentType())
+                            .build()
+            );
+        } catch (Exception e){
+            throw  new StorageException("Problem with uploading file!");
+        }
+
+    }
+
+    public InputStreamResource downloadFile(String path){
+
+        try{
+            var inputStream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(rootBucket)
+                            .object(path)
+                            .build());
+
+            return new InputStreamResource(inputStream);
+
+        }catch (Exception e){
+            throw new StorageException("Problem with downloading file!");
+        }
+    }
+
+    public InputStreamResource downloadFolder(String path) {
+        try {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+            try (ZipOutputStream zipOut = new ZipOutputStream(byteArrayOutputStream)) {
+                var results = minioClient.listObjects(
+                        ListObjectsArgs.builder()
+                                .bucket(rootBucket)
+                                .prefix(path)
+                                .recursive(true)
+                                .build()
+                );
+
+                for (Result<Item> result : results) {
+                    Item item = result.get();
+                    if (item.isDir()) continue;
+
+                    String objectName = item.objectName();
+                    String relativeName = objectName.substring(path.length());
+
+                    try (InputStream fileStream = minioClient.getObject(
+                            GetObjectArgs.builder()
+                                    .bucket(rootBucket)
+                                    .object(objectName)
+                                    .build()
+                    )) {
+                        zipOut.putNextEntry(new ZipEntry(relativeName));
+                        fileStream.transferTo(zipOut);
+                        zipOut.closeEntry();
+                    }
+                }
+
+                zipOut.finish();
+            }
+
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+            return new InputStreamResource(byteArrayInputStream);
+
+        } catch (Exception e) {
+            throw new StorageException("Problem with downloading folder!");
+        }
+    }
 }

@@ -6,11 +6,13 @@ import com.progrohan.cloud_file_storage.repository.MinioStorageRepository;
 import io.minio.Result;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,8 @@ public class ResourceService {
 
     public ResourceResponseDTO getResource(String userName,String reqPath){
 
+        boolean isDirectory = false;
+
         String path = storageRepository.getUserRootFolderByName(userName) + reqPath;
 
         storageRepository.checkIfResourceExists(path);
@@ -28,6 +32,7 @@ public class ResourceService {
 
         if (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
+            isDirectory = true;
             resource.setType("DIRECTORY");
         }else{
             resource.setType("FILE");
@@ -39,8 +44,11 @@ public class ResourceService {
         String resourcePath = path.substring(firstSlashIndex + 1, lastSlashIndex + 1);
         String name = path.substring(lastSlashIndex + 1);
 
+        name += isDirectory ? "/" : "";
+
         resource.setPath(resourcePath);
         resource.setName(name);
+
 
         return resource;
     }
@@ -49,18 +57,22 @@ public class ResourceService {
     public List<ResourceResponseDTO> findResources(String userName, String query){
 
         List<ResourceResponseDTO> resources = new ArrayList<>();
+        String prefix = storageRepository.getUserRootFolderByName(userName);
 
 
         try {
-            Iterable<Result<Item>> results = storageRepository.findResources(query);
+            Iterable<Result<Item>> results = storageRepository.findResources(prefix);
 
             for (Result<Item> result : results) {
+
                 Item item = result.get();
                 String resourcePath = item.objectName();
 
-                int firstSlashIndex = resourcePath.indexOf('/');
+                if (resourcePath.contains(query)) {
+                    int firstSlashIndex = resourcePath.indexOf('/');
 
-                resources.add(getResource(userName, resourcePath.substring(firstSlashIndex + 1)));
+                    resources.add(getResource(userName, resourcePath.substring(firstSlashIndex + 1)));
+                }
             }
             return resources;
         }catch (Exception e){
@@ -84,7 +96,7 @@ public class ResourceService {
         String oldPath = storageRepository.getUserRootFolderByName(userName) + reqPath;
         String path = storageRepository.getUserRootFolderByName(userName) + newPath;
 
-        storageRepository.checkIfResourceExists(reqPath);
+        storageRepository.checkIfResourceExists(oldPath);
 
         if (path.endsWith("/")) {
             storageRepository.renameFolder(oldPath, path);
@@ -95,5 +107,37 @@ public class ResourceService {
         return getResource(userName, newPath);
 
     }
+
+    public List<ResourceResponseDTO> uploadFile(String userName, List<MultipartFile> files, String reqPath){
+
+        List<ResourceResponseDTO> resources = new ArrayList<>();
+
+        for(MultipartFile file: files){
+            String path = storageRepository.getUserRootFolderByName(userName) + reqPath + file.getOriginalFilename();
+
+            storageRepository.uploadFile(path, file);
+
+            resources.add(getResource(userName, reqPath + file.getOriginalFilename()));
+        }
+
+       return resources;
+    }
+
+    public InputStreamResource downloadResource(String userName, String reqPath){
+        String path = storageRepository.getUserRootFolderByName(userName) + reqPath;
+
+        InputStreamResource inputStreamResource;
+
+        if(path.endsWith("/")){
+           inputStreamResource = storageRepository.downloadFolder(path);
+        }
+        else{
+            inputStreamResource = storageRepository.downloadFile(path);
+        }
+
+        return inputStreamResource;
+
+    }
+
 
 }
