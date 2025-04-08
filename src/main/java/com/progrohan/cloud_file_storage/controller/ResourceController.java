@@ -1,7 +1,14 @@
 package com.progrohan.cloud_file_storage.controller;
 
+import com.progrohan.cloud_file_storage.docs.resource.DeleteResourceDocs;
+import com.progrohan.cloud_file_storage.docs.resource.DownloadResourceDocs;
+import com.progrohan.cloud_file_storage.docs.resource.GetResourceDocs;
+import com.progrohan.cloud_file_storage.docs.resource.MoveResourceDocs;
+import com.progrohan.cloud_file_storage.docs.resource.SearchResourceDocs;
+import com.progrohan.cloud_file_storage.docs.resource.UploadResourceDocs;
 import com.progrohan.cloud_file_storage.dto.ResourceResponseDTO;
 import com.progrohan.cloud_file_storage.service.ResourceService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
@@ -21,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.net.URI;
 import java.util.List;
 
+@Tag(name = "Resources", description = "Endpoints for resources manipulations")
 @RestController
 @RequestMapping("/api/resource")
 @RequiredArgsConstructor
@@ -28,6 +36,7 @@ public class ResourceController {
 
     private final ResourceService resourceService;
 
+    @GetResourceDocs
     @GetMapping()
     public ResponseEntity<ResourceResponseDTO> getResource(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String path){
 
@@ -37,6 +46,7 @@ public class ResourceController {
 
     }
 
+    @DownloadResourceDocs
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> downloadResource(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String path){
 
@@ -49,6 +59,7 @@ public class ResourceController {
     }
 
 
+    @UploadResourceDocs
     @PostMapping()
     public ResponseEntity<List<ResourceResponseDTO>> uploadFile(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String path, @RequestParam List<MultipartFile> object){
 
@@ -61,7 +72,7 @@ public class ResourceController {
 
     }
 
-
+    @MoveResourceDocs
     @GetMapping("/move")
     public ResponseEntity<ResourceResponseDTO> moveResource(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String from, @RequestParam String to){
 
@@ -70,6 +81,8 @@ public class ResourceController {
         return ResponseEntity.ok(resource);
 
     }
+
+    @SearchResourceDocs
     @GetMapping("/search")
     public ResponseEntity<List<ResourceResponseDTO>> search(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String query){
 
@@ -79,6 +92,7 @@ public class ResourceController {
 
     }
 
+    @DeleteResourceDocs
     @DeleteMapping()
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteResource(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String path){
