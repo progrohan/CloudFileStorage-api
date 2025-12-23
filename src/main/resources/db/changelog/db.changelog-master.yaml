@@ -1,3 +1,6 @@
 databaseChangeLog:
   - include:
       file: classpath:db/changelog/01-init.yaml
+
+  - include:
+      file: classpath:db/changelog/02-storage_tables.yaml

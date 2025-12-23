@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: progrohan
+      changes:
+        - createTable:
+            tableName: storages
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 2
+      author: progrohan
+      changes:
+        - createTable:
+            tableName: user_storage
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGSERIAL
+                  constraints:
+                    nullable: false
+              - column:
+                  name: storage_id
+                  type: BIGSERIAL
+                  constraints:
+                    nullable: false
+              - column:
+                  name: owning
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: primacy
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+        - addPrimaryKey:
+            tableName: user_storage
+            columnNames: user_id, storage_id
+            constraintName: pk_user_storage
+
+        - addForeignKeyConstraint:
+            baseTableName: user_storage
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_user_storage_user
+
+        - addForeignKeyConstraint:
+            baseTableName: user_storage
+            baseColumnNames: storage_id
+            referencedTableName: storages
+            referencedColumnNames: id
+            constraintName: fk_user_storage_storage
