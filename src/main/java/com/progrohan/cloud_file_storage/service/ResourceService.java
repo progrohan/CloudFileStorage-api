@@ -1,6 +1,7 @@
 package com.progrohan.cloud_file_storage.service;
 
 import com.progrohan.cloud_file_storage.dto.ResourceResponseDTO;
+import com.progrohan.cloud_file_storage.exception.ResourceNotFoundException;
 import com.progrohan.cloud_file_storage.exception.StorageException;
 import com.progrohan.cloud_file_storage.repository.MinioStorageRepository;
 import io.minio.Result;
@@ -19,12 +20,13 @@ import java.util.List;
 public class ResourceService {
 
     private final MinioStorageRepository storageRepository;
+    private final StorageService storageService;
 
-    public ResourceResponseDTO getResource(String userName,String reqPath){
+    public ResourceResponseDTO getResource(Long storageId,String reqPath){
 
         boolean isDirectory = false;
 
-        String path = storageRepository.getUserRootFolderByName(userName) + reqPath;
+        String path = storageService.getStorage(storageId).getName() + reqPath;
 
         storageRepository.checkIfResourceExists(path);
 
@@ -54,10 +56,10 @@ public class ResourceService {
     }
 
 
-    public List<ResourceResponseDTO> findResources(String userName, String query){
+    public List<ResourceResponseDTO> findResources(Long storageId, String query){
 
         List<ResourceResponseDTO> resources = new ArrayList<>();
-        String prefix = storageRepository.getUserRootFolderByName(userName);
+        String prefix = storageService.getStorage(storageId).getName();
 
 
         try {
@@ -71,7 +73,7 @@ public class ResourceService {
                 if (resourcePath.contains(query)) {
                     int firstSlashIndex = resourcePath.indexOf('/');
 
-                    resources.add(getResource(userName, resourcePath.substring(firstSlashIndex + 1)));
+                    resources.add(getResource(storageId, resourcePath.substring(firstSlashIndex + 1)));
                 }
             }
             return resources;
@@ -81,9 +83,9 @@ public class ResourceService {
 
     }
 
-    public void deleteResource(String userName, String reqPath){
+    public void deleteResource(Long storageId, String reqPath){
 
-        String path = storageRepository.getUserRootFolderByName(userName) + reqPath;
+        String path = storageService.getStorage(storageId).getName() + reqPath;
 
         storageRepository.checkIfResourceExists(path);
 
@@ -91,10 +93,12 @@ public class ResourceService {
 
     }
 
-    public ResourceResponseDTO renameResource(String userName, String reqPath, String newPath){
+    public ResourceResponseDTO renameResource(Long storageId, String reqPath, String newPath){
 
-        String oldPath = storageRepository.getUserRootFolderByName(userName) + reqPath;
-        String path = storageRepository.getUserRootFolderByName(userName) + newPath;
+        String prefix = storageService.getStorage(storageId).getName();
+
+        String oldPath = prefix + reqPath;
+        String path = prefix + newPath;
 
         storageRepository.checkIfResourceExists(oldPath);
 
@@ -104,27 +108,27 @@ public class ResourceService {
             storageRepository.renameFile(oldPath, path);
         }
 
-        return getResource(userName, newPath);
+        return getResource(storageId, newPath);
 
     }
 
-    public List<ResourceResponseDTO> uploadFile(String userName, List<MultipartFile> files, String reqPath){
+    public List<ResourceResponseDTO> uploadFile(Long storageId, List<MultipartFile> files, String reqPath){
 
         List<ResourceResponseDTO> resources = new ArrayList<>();
 
         for(MultipartFile file: files){
-            String path = storageRepository.getUserRootFolderByName(userName) + reqPath + file.getOriginalFilename();
+            String path = storageService.getStorage(storageId).getName() + reqPath + file.getOriginalFilename();
 
             storageRepository.uploadFile(path, file);
 
-            resources.add(getResource(userName, reqPath + file.getOriginalFilename()));
+            resources.add(getResource(storageId, reqPath + file.getOriginalFilename()));
         }
 
        return resources;
     }
 
-    public InputStreamResource downloadResource(String userName, String reqPath){
-        String path = storageRepository.getUserRootFolderByName(userName) + reqPath;
+    public InputStreamResource downloadResource(Long storageId, String reqPath){
+        String path = storageService.getStorage(storageId).getName() + reqPath;
 
         InputStreamResource inputStreamResource;
 
@@ -139,5 +143,17 @@ public class ResourceService {
 
     }
 
+    public Boolean checkResource(Long storageId, String reqPath){
+
+        String path = storageService.getStorage(storageId).getName() + reqPath;
+
+        try{
+            storageRepository.checkIfResourceExists(path);
+            return Boolean.TRUE;
+        }catch (ResourceNotFoundException e){
+            return Boolean.FALSE;
+        }
+
+    }
 
 }

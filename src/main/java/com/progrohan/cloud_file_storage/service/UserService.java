@@ -29,8 +29,16 @@ public class UserService implements UserDetailsService {
                 )).orElseThrow(() -> new UsernameNotFoundException("User with username" + username + "does not exist!"));
     }
 
+    public UserEntity loadUserEntityByUsername(String username) throws UsernameNotFoundException{
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(()-> new UsernameNotFoundException("User with username" + username + "does not exist!"));
+    }
+
     public Long getUserId(String name){
-        UserEntity user = userRepository.findByUsername(name).orElseThrow(() -> new UsernameNotFoundException("User with username" + name + "does not exist!"));
+        UserEntity user = userRepository
+                .findByUsername(name)
+                .orElseThrow(() -> new UsernameNotFoundException("User with username" + name + "does not exist!"));
 
         return user.getId();
     }

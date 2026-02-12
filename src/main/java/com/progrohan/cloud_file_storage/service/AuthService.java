@@ -26,7 +26,7 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
-    private final MinioStorageRepository storageService;
+    private final StorageService storageService;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
@@ -41,7 +41,7 @@ public class AuthService {
         UserEntity userEntity = userRepository.saveAndFlush(userMapper.toEntity(userRequestDTO));
 
         try {
-            storageService.createUsersRootFolder(userEntity.getUsername());
+            storageService.createStorage(userEntity.getUsername(), userEntity.getUsername(), true);
         } catch (StorageException e) {
             userRepository.delete(userEntity);
             throw e;

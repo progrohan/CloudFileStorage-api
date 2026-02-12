@@ -1,6 +1,7 @@
 package com.progrohan.cloud_file_storage.service;
 
 import com.progrohan.cloud_file_storage.dto.ResourceResponseDTO;
+import com.progrohan.cloud_file_storage.exception.ResourceAlreadyExistException;
 import com.progrohan.cloud_file_storage.exception.StorageException;
 import com.progrohan.cloud_file_storage.repository.MinioStorageRepository;
 import io.minio.Result;
@@ -16,29 +17,32 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class DirectoryService {
 
-    private final MinioStorageRepository storageRepository;
+    private final MinioStorageRepository minioStorageRepository;
     private final ResourceService resourceService;
+    private final StorageService storageService;
 
-    public ResourceResponseDTO createEmptyDirectory(String userName, String path){
+    public ResourceResponseDTO createEmptyDirectory(Long storageId, String path){
 
-        String finalPath = storageRepository.getUserRootFolderByName(userName) + path;
+        String finalPath = storageService.getStorage(storageId).getName() + path;
 
-        storageRepository.createEmptyDirectory(finalPath);
+        if(Boolean.TRUE.equals(resourceService.checkResource(storageId, path))) throw new ResourceAlreadyExistException("Папка с таким именем уже существует в текущей директории");
 
-        return resourceService.getResource(userName, path);
+        minioStorageRepository.createEmptyDirectory(finalPath);
+
+        return resourceService.getResource(storageId, path);
 
     }
 
-    public List<ResourceResponseDTO> getDirectoriesResources(String userName, String path){
+    public List<ResourceResponseDTO> getDirectoriesResources(Long storageId, String path){
 
         List<ResourceResponseDTO> resources = new ArrayList<>();
 
-        String finalPath = storageRepository.getUserRootFolderByName(userName) + path;
+        String finalPath = storageService.getStorage(storageId).getName().replace("/", "") + path;
 
-        storageRepository.checkIfResourceExists(finalPath);
+        minioStorageRepository.checkIfResourceExists(finalPath);
 
         try {
-            Iterable<Result<Item>> results = storageRepository.getDirectoriesResources(finalPath);
+            Iterable<Result<Item>> results = minioStorageRepository.getDirectoriesResources(finalPath);
 
             for (Result<Item> result : results) {
                 Item item = result.get();
@@ -47,9 +51,10 @@ public class DirectoryService {
                 if (Objects.equals(resourcePath, finalPath )) continue;
 
                 int firstSlashIndex = resourcePath.indexOf('/');
+                resourcePath = resourcePath.substring(firstSlashIndex + 1);
 
-
-                resources.add(resourceService.getResource(userName, resourcePath.substring(firstSlashIndex + 1)));
+                if(Boolean.FALSE.equals(resourceService.checkResource(storageId, resourcePath))) continue;
+                resources.add(resourceService.getResource(storageId, resourcePath));
             }
             return resources;
         }catch (Exception e){

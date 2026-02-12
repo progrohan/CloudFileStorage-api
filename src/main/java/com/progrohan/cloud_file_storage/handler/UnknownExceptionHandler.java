@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class UnknownExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponseDTO> handleException() {
-        return ResponseEntity.internalServerError().body(new ErrorResponseDTO("Unknown error"));
+   @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDTO> handleException(Exception e) {
+        return ResponseEntity.internalServerError().body(new ErrorResponseDTO(e.getMessage()));
     }
 
 }

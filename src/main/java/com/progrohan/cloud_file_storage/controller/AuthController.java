@@ -7,6 +7,7 @@ import com.progrohan.cloud_file_storage.dto.UserResponseDTO;
 import com.progrohan.cloud_file_storage.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +28,9 @@ public class AuthController {
 
     @SignUpDocs
     @PostMapping("/sign-up")
-    public ResponseEntity<UserResponseDTO> signUp(@RequestBody UserRequestDTO userRequestDTO){
+    public ResponseEntity<UserResponseDTO> signUp( @RequestBody @Valid UserRequestDTO userRequestDTO){
+
+        System.out.println("CONTROLLER CALLED");
 
         UserResponseDTO user = authService.createUser(userRequestDTO);
 
@@ -39,7 +42,7 @@ public class AuthController {
 
     @SignInDocs
     @PostMapping("/sign-in")
-    public ResponseEntity<UserResponseDTO> signIn(@RequestBody UserRequestDTO userRequestDTO, HttpSession session){
+    public ResponseEntity<UserResponseDTO> signIn(@Valid @RequestBody UserRequestDTO userRequestDTO, HttpSession session){
 
         UserResponseDTO user = authService.loginUser(userRequestDTO, session);
 

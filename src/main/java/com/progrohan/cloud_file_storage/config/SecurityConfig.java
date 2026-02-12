@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/sign-up").permitAll()
                         .requestMatchers("/api/auth/sign-in").permitAll()
@@ -70,7 +70,8 @@ public class SecurityConfig {
                 "http://localhost:80",
                 "http://localhost",
                 "http://frontend",
-                "http://frontend:80"
+                "http://frontend:80",
+                "http://localhost:5173"
         ));
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");

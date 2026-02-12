@@ -3,7 +3,10 @@ package com.progrohan.cloud_file_storage.controller;
 import com.progrohan.cloud_file_storage.docs.directory.CreateDirectoryDocs;
 import com.progrohan.cloud_file_storage.docs.directory.GetDirectoryResourcesDocs;
 import com.progrohan.cloud_file_storage.dto.ResourceResponseDTO;
+import com.progrohan.cloud_file_storage.exception.ResourceAlreadyExistException;
 import com.progrohan.cloud_file_storage.service.DirectoryService;
+import com.progrohan.cloud_file_storage.service.ResourceService;
+import com.progrohan.cloud_file_storage.validation.ValidId;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,12 +28,13 @@ import java.util.List;
 public class DirectoryController {
 
     private final DirectoryService directoryService;
+    private final ResourceService resourceService;
 
     @CreateDirectoryDocs
     @PostMapping()
-    public ResponseEntity<ResourceResponseDTO> createEmptyDirectory(@RequestParam String path,
-                                                                    @AuthenticationPrincipal UserDetails userDetails){
-        ResourceResponseDTO resource = directoryService.createEmptyDirectory(userDetails.getUsername(), path);
+    public ResponseEntity<ResourceResponseDTO> createEmptyDirectory( @ValidId @RequestParam Long storageId, @RequestParam String path,@AuthenticationPrincipal UserDetails userDetails){
+
+        ResourceResponseDTO resource = directoryService.createEmptyDirectory(storageId , path);
 
 
         return ResponseEntity.created(URI.create("/api/directory")).body(resource);
@@ -38,9 +42,9 @@ public class DirectoryController {
 
     @GetDirectoryResourcesDocs
     @GetMapping()
-    public ResponseEntity<List<ResourceResponseDTO>> getDirectoriesResources(@RequestParam String path, @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<List<ResourceResponseDTO>> getDirectoriesResources(@ValidId @RequestParam Long storageId, @RequestParam String path, @AuthenticationPrincipal UserDetails userDetails){
 
-        List<ResourceResponseDTO> directoriesResources = directoryService.getDirectoriesResources(userDetails.getUsername(), path);
+        List<ResourceResponseDTO> directoriesResources = directoryService.getDirectoriesResources(storageId, path);
 
         return ResponseEntity.ok(directoriesResources);
     }

@@ -16,6 +16,7 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(32)
                   constraints:
+                    unique: true
                     nullable: false
 
   - changeSet:
@@ -38,7 +39,7 @@ databaseChangeLog:
               - column:
                   name: owning
                   type: BOOLEAN
-                  defaultValueBoolean: false
+                  defaultValueBoolean: true
               - column:
                   name: primacy
                   type: BOOLEAN

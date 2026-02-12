@@ -8,9 +8,11 @@ import com.progrohan.cloud_file_storage.docs.resource.SearchResourceDocs;
 import com.progrohan.cloud_file_storage.docs.resource.UploadResourceDocs;
 import com.progrohan.cloud_file_storage.dto.ResourceResponseDTO;
 import com.progrohan.cloud_file_storage.service.ResourceService;
+import com.progrohan.cloud_file_storage.validation.ValidId;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Tag(name = "Resources", description = "Endpoints for resources manipulations")
@@ -38,9 +41,11 @@ public class ResourceController {
 
     @GetResourceDocs
     @GetMapping()
-    public ResponseEntity<ResourceResponseDTO> getResource(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String path){
+    public ResponseEntity<ResourceResponseDTO> getResource(@AuthenticationPrincipal UserDetails userDetails,
+                                                           @ValidId @RequestParam Long storageId,
+                                                           @RequestParam String path){
 
-        ResourceResponseDTO resource = resourceService.getResource(userDetails.getUsername(), path);
+        ResourceResponseDTO resource = resourceService.getResource(storageId, path);
 
         return ResponseEntity.ok(resource);
 
@@ -48,12 +53,19 @@ public class ResourceController {
 
     @DownloadResourceDocs
     @GetMapping("/download")
-    public ResponseEntity<InputStreamResource> downloadResource(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String path){
+    public ResponseEntity<InputStreamResource> downloadResource(@AuthenticationPrincipal UserDetails userDetails,
+                                                                @ValidId @RequestParam Long storageId,
+                                                                @RequestParam String path){
 
-        InputStreamResource inputStreamResource = resourceService.downloadResource(userDetails.getUsername(), path);
+        InputStreamResource inputStreamResource = resourceService.downloadResource(storageId, path);
+        String filename = path.endsWith("/")
+                ? Paths.get(path).getFileName() + ".zip"
+                : Paths.get(path).getFileName().toString();
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + filename + "\"")
                 .body(inputStreamResource);
 
     }
@@ -61,10 +73,13 @@ public class ResourceController {
 
     @UploadResourceDocs
     @PostMapping()
-    public ResponseEntity<List<ResourceResponseDTO>> uploadFile(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String path, @RequestParam List<MultipartFile> object){
+    public ResponseEntity<List<ResourceResponseDTO>> uploadFile(@AuthenticationPrincipal UserDetails userDetails,
+                                                                @ValidId @RequestParam Long storageId,
+                                                                @RequestParam String path,
+                                                                @RequestParam List<MultipartFile> object)
+    {
 
-
-        List<ResourceResponseDTO> resourceResponseDTOs = resourceService.uploadFile(userDetails.getUsername(), object, path);
+        List<ResourceResponseDTO> resourceResponseDTOs = resourceService.uploadFile(storageId, object, path);
 
         return ResponseEntity.created(URI
                 .create("api/resource/search"))
@@ -74,9 +89,12 @@ public class ResourceController {
 
     @MoveResourceDocs
     @GetMapping("/move")
-    public ResponseEntity<ResourceResponseDTO> moveResource(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String from, @RequestParam String to){
+    public ResponseEntity<ResourceResponseDTO> moveResource(@AuthenticationPrincipal UserDetails userDetails,
+                                                            @ValidId @RequestParam Long storageId,
+                                                            @RequestParam String from,
+                                                            @RequestParam String to){
 
-        ResourceResponseDTO resource = resourceService.renameResource(userDetails.getUsername(), from, to);
+        ResourceResponseDTO resource = resourceService.renameResource(storageId, from, to);
 
         return ResponseEntity.ok(resource);
 
@@ -84,9 +102,11 @@ public class ResourceController {
 
     @SearchResourceDocs
     @GetMapping("/search")
-    public ResponseEntity<List<ResourceResponseDTO>> search(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String query){
+    public ResponseEntity<List<ResourceResponseDTO>> search(@AuthenticationPrincipal UserDetails userDetails,
+                                                            @ValidId @RequestParam Long storageId,
+                                                            @RequestParam String query){
 
-        List<ResourceResponseDTO> resources = resourceService.findResources(userDetails.getUsername(), query);
+        List<ResourceResponseDTO> resources = resourceService.findResources(storageId, query);
 
         return ResponseEntity.ok(resources);
 
@@ -95,9 +115,11 @@ public class ResourceController {
     @DeleteResourceDocs
     @DeleteMapping()
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteResource(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String path){
+    public void deleteResource(@AuthenticationPrincipal UserDetails userDetails,
+                               @ValidId @RequestParam Long storageId,
+                               @RequestParam String path){
 
-        resourceService.deleteResource(userDetails.getUsername(), path);
+        resourceService.deleteResource(storageId, path);
 
     }
 

@@ -53,9 +53,8 @@ public class MinioStorageRepository {
         }
     }
 
-    public void createUsersRootFolder(String name){
+    public void createRootFolder(String folderName){
         try{
-            String folderName = getUserRootFolderByName(name);
 
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -66,7 +65,7 @@ public class MinioStorageRepository {
                             .build()
             );
         }catch (Exception e){
-            throw new StorageException("Problem with creating users root folder!");
+            throw new StorageException("Problem with creating root folder!");
         }
     }
 
@@ -136,7 +135,6 @@ public class MinioStorageRepository {
     }
 
     public void checkIfResourceExists(String path){
-        if (!path.endsWith("/")){
             try{
                 minioClient.statObject(StatObjectArgs.builder()
                         .bucket(rootBucket)
@@ -147,7 +145,6 @@ public class MinioStorageRepository {
             }catch (Exception e){
                 throw new StorageException("Problem with getting resource!");
             }
-        }
     }
 
     public void renameFile(String path, String newPath){
@@ -160,10 +157,13 @@ public class MinioStorageRepository {
                     .bucket(rootBucket)
                     .object(newPath)
                     .build());
+
+            deleteResource(path);
+
         }catch (Exception e){
             throw new StorageException("Problem with renaming file!");
         }
-        deleteResource(path);
+
     }
 
     public void renameFolder(String path, String newPath){
